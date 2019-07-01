@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: nvidia-gpu-device-plugin
+  namespace: kube-system
+  labels:
+    k8s-app: nvidia-gpu-device-plugin
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: nvidia-gpu-device-plugin
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: "" # deprecated in 1.13, removed in 1.14
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+      # Allow this pod to be rescheduled while the node is in "critical add-ons only" mode.
+      # This, along with the annotation above marks this pod as a critical add-on.
+      - key: CriticalAddonsOnly
+        operator: Exists
+      #hostNetwork: true
+      #hostPID: true
+      volumes:
+      - name: device-plugin
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: dev
+        hostPath:
+          path: /dev
+      containers:
+      - image: "srcd/k8s-nvidia-gpu-overcommit:v0.1.0"
+        command: ["/usr/bin/nvidia-gpu-device-plugin", "-logtostderr", "-host-path=/opt/nvidia", "-overcommit-multiply-by=2"]
+        name: nvidia-gpu-device-plugin
+        resources:
+          requests:
+            cpu: 200m
+            memory: 10Mi
+          limits:
+            cpu: 200m
+            memory: 100Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: device-plugin
+          mountPath: /device-plugin
+        - name: dev
+          mountPath: /dev

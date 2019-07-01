@@ -1,0 +1,12 @@
+[Match]
+Name=external0
+
+[Network]
+LinkLocalAddressing=no
+IPv6AcceptRA=no
+DHCP=true
+
+# We will only use the DNS servers
+# announced by our provisioners
+[DHCP]
+UseDNS=false
